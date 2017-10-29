@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>game</title>
+</head>
+<body>
+
+<canvas id ="canvas" width = "1350" height = "750"></canvas>
+    <script>
+  
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+     
+        const numPoints = 1; //COUNT(enemies) can change it into any other number
+        const background = new Image();  
+        background.src = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWeg-2LuxJAGekBjb-Hox8Ny5XKqAS_2InMFB4iLukqaZAKNdt3g';
+  
+        const player = new Image();
+        player.src = "http://www.cliparthut.com/clip-arts/1755/alien-spaceship-cartoon-ufo-1755177.png";
+
+        const badGuyImg = new Image();
+        badGuyImg.src = "http://clipartix.com/wp-content/uploads/2016/09/Alien-spaceship-clipart-cool-images-alien-flying-saucers.gif";
+        
+        const badGuysImg = new Image();
+        badGuysImg.src = "https://cdn.pixabay.com/photo/2014/04/03/00/42/spaceship-309153_960_720.png";
+        
+        const floorY = canvas.height - 350; //the ground
+        const randompick = function(num) {
+          return Math.floor(Math.random() * num)+1; 
+        };
+        const enemies = []; //empty array for later use
+        const datagame = {
+            hero  : {
+              x       : 200,
+              y       : floorY,
+              width   : 100,
+              img     : player,
+              height  : 60,
+              xDelta  : 0,
+              yDelta  : 0
+            },
+            don: { 
+              x       : canvas.width - 400,
+              y       : canvas.height - 300,
+              width   : 200,
+              img     : badGuyImg,
+              height  : 160,
+              xDelta  : 2,
+              yDelta  : 2
+            },
+        };
+  
+         maxJumpheight = floorY - (datagame.hero.height*2); //limit
+        const leftKey = 37;
+        const upKey = 38;
+        const rightKey = 39;
+        const downKey = 40;
+        addEventListener('keydown', function(event) {
+    
+            const hero = datagame.hero;
+	            if(event.keyCode === rightKey) {
+              hero.x = hero.x + 10;
+                if(hero.x >= canvas.width - hero.width){
+              hero.x = 0; //from the end to the start
+                }
+            }
+              else if(event.keyCode === leftKey) {
+                  hero.x = hero.x - 10;
+          
+            
+              } 
+              else if (event.keyCode === upKey) {
+                  if(hero.yDelta === 0) {
+                      hero.yDelta = 5;
+                      hero.y -= hero.yDelta;
+                  }
+                 
+              }
+      
+        }, false); 
+        const forEach = function(arr, func){
+            const helper = function(index){
+                if (index === arr.length){
+                return;
+                }
+          
+                func(arr[index]);
+          
+                helper(index + 1);
+            };
+            helper(0);
+          
+        };
+    
+        const createPoints = function(count, w, h) {
+       
+            if(count === 0) {
+                return;
+        }
+            enemies.push({
+              x      : randompick(w - 20), //for random x
+              y      : randompick(h - 20), //for random y
+              width  : 150,
+              height : 100,
+              xDelta : 4,
+              yDelta : 4,
+              img    : badGuysImg
+            });
+      
+            createPoints(count-1, w, h);
+        };
+      
+        createPoints(numPoints, canvas.width, canvas.height);
+        const collision = function() { // to figure out when objects have common points
+            const don = datagame.don;
+            const hero = datagame.hero;
+      
+            if (hero.x < don.x + don.width  && hero.x + hero.width  > don.x &&
+                hero.y < don.y + don.height && hero.y + hero.height > don.y) {
+                    alert("Good job! You won"); //then you win
+              
+            }
+  
+            forEach(enemies, function(enemy){
+        
+                  if((hero.x <= enemy.x && enemy.x <= hero.x + hero.width) ||
+                      (hero.x <= enemy.x + enemy.width &&  enemy.width + enemy.x <= hero.x + hero.width)){
+                      if((hero.y <= enemy.y && enemy.y <= hero.y + hero.height) ||
+                          (hero.y <= enemy.y + enemy.height &&  enemy.height + enemy.y <= hero.y + hero.height)) {
+                              alert("Game Over"); //you loose
+                      enemies.splice(0, enemies.width);
+              
+                      }
+                  }
+            });
+        };
+      
+     
+        const draw = function() {
+    
+            context.drawImage(background, 0, 0, canvas.width, canvas.height);
+   
+            const hero = datagame.hero;
+            context.drawImage(player, hero.x, hero.y, hero.width, hero.height);
+            const don = datagame.don;   
+            context.drawImage(badGuyImg, don.x, don.y, don.width, don.height);
+            forEach(enemies, function (enemy) {
+                context.drawImage(badGuysImg, enemy.x, enemy.y, enemy.width, enemy.height)
+            });
+        };
+   
+        const update = function() {
+            const hero = datagame.hero; // after jumping back to the ground
+                if (hero.yDelta !== 0){
+                        hero.y = hero.y - hero.yDelta;
+                    if(hero.y <= maxJumpheight){
+                            hero.yDelta = -hero.yDelta;
+                    } else if(hero.y >= floorY) {
+                                hero.y = floorY;
+                                hero.yDelta = 0;
+                      }
+                };
+            forEach(enemies, function(enemy) { //badguy going randomly
+                if(enemy.x >= canvas.width - enemy.width){
+                    enemy.xDelta = - randompick(6);
+                } else if(enemy.x <= 0){
+                      enemy.xDelta = randompick(6);
+                  }
+            
+                if(enemy.y >= canvas.height - enemy.height){
+                    enemy.yDelta = -6;
+                } else if(enemy.y <= 0){
+                      enemy.yDelta = 6;
+            }
+            enemy.x += enemy.xDelta;
+            enemy.y += enemy.yDelta;
+        
+        });
+        const don = datagame.don; //Don going up and down
+  
+            if (don.y >= canvas.height - don.height){
+                don.yDelta = -3;
+            } else if (don.y <= 0) {
+                    don.yDelta = 3;
+              }
+            don.y = don.y + don.yDelta;
+            collision();
+        };
+    
+        const loop = function() {
+            draw();
+            update();
+            requestAnimationFrame(loop);
+    
+        };
+  
+        loop();
+  
+ 
+  
+    </script>
+
+</body>
+</html>
